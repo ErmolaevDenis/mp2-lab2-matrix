@@ -26,7 +26,7 @@ protected:
 public:
   TDynamicVector(size_t size = 1) : sz(size)
   {
-    if (sz <= 0)
+    if (sz == 0)
       throw out_of_range("Vector size should be greater than zero");
     if (sz > MAX_VECTOR_SIZE)
         throw out_of_range("Vector size should be less than 100000000");
@@ -35,19 +35,21 @@ public:
   TDynamicVector(T* arr, size_t s) : sz(s)
   {
     assert(arr != nullptr && "TDynamicVector ctor requires non-nullptr arg");
+    if (sz == 0)
+        throw out_of_range("Vector size should be greater than zero");
+    if (sz > MAX_VECTOR_SIZE)
+        throw out_of_range("Vector size should be less than 100000000");
     pMem = new T[sz];
     std::copy(arr, arr + sz, pMem);
   }
   TDynamicVector(const TDynamicVector& v)
   {
-      assert(v.pMem != nullptr && "TDynamicVector ctor requires non-nullptr arg");
       sz = v.sz;
       pMem = new T[sz]();
       std::copy(v.pMem, v.pMem + sz, pMem);
   }
   TDynamicVector(TDynamicVector&& v) noexcept
   {
-      assert(v.pMem != nullptr && "TDynamicVector ctor requires non-nullptr arg");
       pMem = nullptr;
       swap(*this, v);
   }
@@ -67,6 +69,9 @@ public:
   }
   TDynamicVector& operator=(TDynamicVector&& v) noexcept
   {
+      sz = 0;
+      delete[] pMem;
+      pMem = nullptr;
       swap(*this, v);
       return *this;
   }
@@ -113,21 +118,21 @@ public:
   }
 
   // скалярные операции
-  TDynamicVector operator+(/*T*/ double val)
+  TDynamicVector operator+(T val)
   {
       TDynamicVector<T> tmp(sz);
       for (size_t i = 0; i < sz; i++)
           tmp[i] = pMem[i] + val;
       return tmp;
   }
-  TDynamicVector operator-(double val)
+  TDynamicVector operator-(T val)
   {
       TDynamicVector<T> tmp(sz);
       for (size_t i = 0; i < sz; i++)
           tmp[i] = pMem[i] - val;
       return tmp;
   }
-  TDynamicVector operator*(double val)
+  TDynamicVector operator*(T val)
   {
       TDynamicVector<T> tmp(sz);
       for (size_t i = 0; i < sz; i++)
@@ -156,12 +161,12 @@ public:
           tmp[i] = pMem[i] - v.pMem[i];
       return tmp;
   }
-  T operator*(const TDynamicVector& v) noexcept(noexcept(T()))
+  T operator*(const TDynamicVector& v)
   {
       if (sz != v.sz)
           throw length_error("Vectors must have equal sizes");
 
-      double tmp = 0;
+      T tmp = T();
       for (size_t i = 0; i < sz; i++)
           tmp += pMem[i] * v.pMem[i];
       return tmp;
@@ -199,6 +204,8 @@ class TDynamicMatrix : private TDynamicVector<TDynamicVector<T>>
 public:
   TDynamicMatrix(size_t s = 1) : TDynamicVector<TDynamicVector<T>>(s)
   {
+      if (sz == 0)
+          throw out_of_range("Vector size should be greater than zero");
       if (sz > MAX_MATRIX_SIZE)
           throw out_of_range("Matrix size should be less than 10000");
     for (size_t i = 0; i < sz; i++)
@@ -222,11 +229,12 @@ public:
       return sz * sz;
   }
 
+
   // сравнение
   bool operator==(const TDynamicMatrix& m) const noexcept
   {
       if (sz != m.sz)
-          throw length_error("Matrix must have equal sizes");
+          return false;
       for (size_t i = 0; i < sz; i++)
           if (pMem[i] != m[i])
               return false;
@@ -239,12 +247,12 @@ public:
   }
 
   // матрично-скалярные операции
-  TDynamicVector<T> operator*(const T& val)
+  TDynamicMatrix<T> operator*(T val)
   {
       TDynamicMatrix<T> tmp(sz);
       for (size_t i = 0; i < sz; i++)
           for (size_t j = 0; j < sz; j++)
-              tmp[i][j] = pMem[i] * val;
+              tmp[i][j] = pMem[i][j] * val;
       return tmp;
   }
 
